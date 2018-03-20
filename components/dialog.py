@@ -15,6 +15,7 @@ class Dialog(Ui_Dialog, QDialog):
 
         self.edtURL.textChanged.connect(self.edt_changed)
         self.btnAdd.clicked.connect(self.add_video)
+        self.edt_changed()
 
     def get_video_id(self):
         video_id = None
