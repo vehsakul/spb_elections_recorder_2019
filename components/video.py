@@ -1,14 +1,8 @@
-import asyncio
-import itertools
-import os
 import uuid
-from urllib.parse import parse_qs
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontMetrics
 from PyQt5.QtWidgets import QWidget
-import m3u8
-import requests
 
 from components.download_worker import DownloadVideoWorker
 from .Ui_video import Ui_Video
@@ -16,9 +10,6 @@ from .Ui_video import Ui_Video
 
 class Video(Ui_Video, QWidget):
     def __init__(self, video_id, dialog, parent=None):
-        from loop import loop
-        self.loop = loop
-
         super(Video, self).__init__(parent)
         self.setupUi(self)
         self.setObjectName(str(uuid.uuid4()))
