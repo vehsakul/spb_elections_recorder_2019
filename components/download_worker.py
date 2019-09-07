@@ -101,6 +101,8 @@ class DownloadVideoWorker(QThread):
                 return
             if self.error:
                 return
+            if not hls.files:
+                continue
             try:
                 idx = hls.files.index(self.last_file) + 1
             except ValueError:
