@@ -23,7 +23,7 @@ class DownloadFileWorker(QThread):
     def run(self):
         try:
             with open(self.path, 'wb') as f:
-                while True:
+                for i in range(10):
                     try:
                         f.write(requests.get(self.url, verify=False).content)
                         break

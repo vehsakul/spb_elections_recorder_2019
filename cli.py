@@ -49,7 +49,7 @@ class VideoStream:
     def _dl_chunk(self, url, path, length):
         try:
             with open(path, 'wb') as f:
-                while True:
+                for i in range(10):
                     try:
                         f.write(requests.get(url, verify=False).content)
                         break
