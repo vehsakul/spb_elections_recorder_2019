@@ -55,6 +55,7 @@ class VideoStream:
                         break
                     except requests.ConnectionError:
                         self.logger.warning('Cannot download chunk, retrying...')
+                        time.sleep(1)
         except IOError:
             self.logger.error('Disk write error')
             raise
@@ -99,6 +100,7 @@ class VideoStream:
                 hls = self.load_hls()
                 if hls:
                     break
+            time.sleep(1)
 
 
 @click.command()
