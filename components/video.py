@@ -38,6 +38,7 @@ class Video(Ui_Video, QWidget):
         self.task.started.connect(self.started)
         self.task.downloaded_chunk.connect(self.update_length)
         self.task.stopped.connect(self.stopped)
+        self.task.errored.connect(self.errored)
         self.task.start()
 
     def started(self):
@@ -56,6 +57,11 @@ class Video(Ui_Video, QWidget):
         self.btnStop.setVisible(False)
         self.btnRemove.setVisible(True)
         self.btnRemove.setEnabled(True)
+
+    def errored(self, msg):
+        self.lblState.setStyleSheet('color: #900')
+        self.lblState.setText(msg)
+        self.btnStop.setVisible(False)
 
     def remove(self):
         self.dialog.lstVideos.layout().removeWidget(self)

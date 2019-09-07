@@ -10,6 +10,7 @@ import m3u8
 
 class DownloadFileWorker(QThread):
     finished = Signal(float)
+    errored = Signal(str)
 
     def __init__(self, url, path, length):
         super(DownloadFileWorker, self).__init__()
@@ -19,8 +20,17 @@ class DownloadFileWorker(QThread):
         self.length = length
 
     def run(self):
-        with open(self.path, 'wb') as f:
-            f.write(requests.get(self.url, verify=False).content)
+        try:
+            with open(self.path, 'wb') as f:
+                while True:
+                    try:
+                        f.write(requests.get(self.url, verify=False).content)
+                        break
+                    except requests.ConnectionError:
+                        pass
+        except IOError:
+            self.errored.emit('Ошибка записи\n(проверьте свободное место на диске)')
+            return
         self.finished.emit(self.length)
 
 
@@ -28,6 +38,7 @@ class DownloadVideoWorker(QThread):
     started = Signal()
     downloaded_chunk = Signal(float)
     stopped = Signal()
+    errored = Signal(str)
 
     def __init__(self, uik_obj, index, stream_url):
         super(DownloadVideoWorker, self).__init__()
@@ -37,7 +48,7 @@ class DownloadVideoWorker(QThread):
         self.hls_url = stream_url
         self.part_num = self.media_sequence = 0
         self.meta = self.hls = None
-        self.stop = False
+        self.stop = self.error = False
         self.tasks = []
 
     def _get_available_dir(self):
@@ -49,28 +60,47 @@ class DownloadVideoWorker(QThread):
     def _dl_chunk(self, url, path, length):
         dl_worker = DownloadFileWorker(url, path, length)
         dl_worker.finished.connect(self.downloaded_chunk)
+        dl_worker.errored.connect(self.on_error)
         self.tasks.append(dl_worker)
         dl_worker.start()
 
     def load_hls(self):
-        with tempfile.TemporaryDirectory() as dir:
-            file_path = os.path.join(dir, 'playlist.m3u8')
-            with open(file_path, 'wb') as f:
-                f.write(requests.get(self.hls_url, verify=False).content)
-            return m3u8.load(file_path)
+        try:
+            with tempfile.TemporaryDirectory() as dir:
+                file_path = os.path.join(dir, 'playlist.m3u8')
+                with open(file_path, 'wb') as f:
+                    f.write(requests.get(self.hls_url, verify=False).content)
+                return m3u8.load(file_path)
+        except:
+            return None
+
+    def on_error(self, msg):
+        self.error = True
+        self.errored.emit(msg)
 
     def run(self):
         self.directory = self._get_available_dir()
-        os.makedirs(self.directory)
+
+        try:
+            os.makedirs(self.directory)
+        except OSError:
+            self.errored.emit('Ошибка записи\n(проверьте свободное место на диске)')
+            return
 
         self.started.emit()
 
         hls = self.load_hls()
+        if not hls:
+            self.error = True
+            self.errored.emit('Ошибка загрузки плейлиста')
+            return
         self.media_sequence = hls.media_sequence
         while True:
             if self.stop:
                 self.stopped.emit()
-                break
+                return
+            if self.error:
+                return
             try:
                 idx = hls.files.index(self.last_file) + 1
             except ValueError:
@@ -84,4 +114,7 @@ class DownloadVideoWorker(QThread):
                 self._dl_chunk(self.hls_url + file, file_name, hls.segments[idx+i].duration)
                 self.part_num += 1
             time.sleep(hls.target_duration)
-            hls = self.load_hls()
+            while True:
+                hls = self.load_hls()
+                if hls:
+                    break
