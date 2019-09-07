@@ -1,9 +1,12 @@
 import sys
 import traceback
 
-from PyQt5.QtWidgets import QApplication
+import urllib3
+from PySide2.QtWidgets import QApplication
 
 from components.dialog import Dialog
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def excepthook(etype, value, tb):
@@ -18,4 +21,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     dlg = Dialog()
     dlg.show()
-    app.exec()
+    app.exec_()

@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'components/video.ui'
+# Form implementation generated from reading ui file 'video.ui'
 #
-# Created by: PyQt5 UI code generator 5.10.1
+# Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+
+from PySide2 import QtCore, QtGui, QtWidgets
+
 
 class Ui_Video(object):
     def setupUi(self, Video):
@@ -67,6 +69,7 @@ class Ui_Video(object):
         self.btnStop.setObjectName("btnStop")
         self.horizontalLayout.addWidget(self.btnStop)
         self.btnRemove = QtWidgets.QPushButton(self.widget)
+        self.btnRemove.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -86,6 +89,5 @@ class Ui_Video(object):
         self.lblTitle.setText(_translate("Video", "Title"))
         self.lblState.setText(_translate("Video", "Loading metadata..."))
         self.lblLength.setText(_translate("Video", "00:00:00"))
-        self.btnStop.setText(_translate("Video", "Stop"))
-        self.btnRemove.setText(_translate("Video", "Remove"))
-
+        self.btnStop.setText(_translate("Video", "Остановить"))
+        self.btnRemove.setText(_translate("Video", "Удалить"))

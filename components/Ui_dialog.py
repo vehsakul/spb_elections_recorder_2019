@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'components/dialog.ui'
+# Form implementation generated from reading ui file 'dialog.ui'
 #
-# Created by: PyQt5 UI code generator 5.10.1
+# Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+
+from PySide2 import QtCore, QtGui, QtWidgets
+
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(400, 300)
+        Dialog.resize(400, 401)
         self.verticalLayout = QtWidgets.QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName("verticalLayout")
         self.label = QtWidgets.QLabel(Dialog)
@@ -23,6 +25,8 @@ class Ui_Dialog(object):
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.edtURL = QtWidgets.QLineEdit(self.widget)
+        self.edtURL.setText("")
+        self.edtURL.setPlaceholderText("")
         self.edtURL.setObjectName("edtURL")
         self.horizontalLayout.addWidget(self.edtURL)
         self.btnAdd = QtWidgets.QPushButton(self.widget)
@@ -30,6 +34,9 @@ class Ui_Dialog(object):
         self.btnAdd.setObjectName("btnAdd")
         self.horizontalLayout.addWidget(self.btnAdd)
         self.verticalLayout.addWidget(self.widget)
+        self.lblCameraInfo = QtWidgets.QLabel(Dialog)
+        self.lblCameraInfo.setObjectName("lblCameraInfo")
+        self.verticalLayout.addWidget(self.lblCameraInfo)
         self.groupBox = QtWidgets.QGroupBox(Dialog)
         self.groupBox.setObjectName("groupBox")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.groupBox)
@@ -48,7 +55,7 @@ class Ui_Dialog(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 364, 194))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 362, 242))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
@@ -71,9 +78,7 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Stream Recorder"))
-        self.label.setText(_translate("Dialog", "Stream URL"))
-        self.edtURL.setText(_translate("Dialog", "https://www.youtube.com/watch?v=ueupsBPNkSc"))
-        self.edtURL.setPlaceholderText(_translate("Dialog", "https://youtube.com/watch?v=-VwZr-4k9yI"))
+        self.label.setText(_translate("Dialog", "УИК №"))
         self.btnAdd.setText(_translate("Dialog", "Add"))
-        self.groupBox.setTitle(_translate("Dialog", "Queue"))
-
+        self.lblCameraInfo.setText(_translate("Dialog", "Район: -<br>Учреждение: -<br>Адрес: -"))
+        self.groupBox.setTitle(_translate("Dialog", "Очередь"))

@@ -1,6 +1,7 @@
+import json
 import re
 
-from PyQt5.QtWidgets import QDialog, QVBoxLayout
+from PySide2.QtWidgets import QDialog, QVBoxLayout
 
 from .Ui_dialog import Ui_Dialog
 from .video import Video
@@ -12,27 +13,26 @@ class Dialog(Ui_Dialog, QDialog):
         self.setupUi(self)
 
         self.videos = []
+        with open('cameras.json') as f:
+            self.cameras = json.load(f)
 
         self.edtURL.textChanged.connect(self.edt_changed)
         self.btnAdd.clicked.connect(self.add_video)
         self.edt_changed()
 
-    def get_video_id(self):
-        video_id = None
-        link = re.sub(r'[<>]', '', self.edtURL.text())
-        parts = re.split(r'(vi/|v=|/v/|youtu\.be/|/embed/)', link)
-        if len(parts) > 2:
-            video_id = re.split(r'[^0-9a-zA-Z_-]', parts[2])
-            video_id = video_id[0]
-        elif not re.search(r'[^0-9a-zA-Z_-]', link):
-            video_id = link
-        return video_id
-
     def edt_changed(self):
-        self.btnAdd.setEnabled(bool(self.get_video_id()))
+        try:
+            uik = self.cameras[self.edtURL.text()]
+            self.btnAdd.setEnabled(True)
+            self.lblCameraInfo.setText('Район: {}\nУчреждение: {}\nАдрес: {}'.format(
+                uik['city_area_name'], uik['address_title'], uik['address']))
+        except KeyError:
+            self.btnAdd.setEnabled(False)
+            self.lblCameraInfo.setText('Район: -\nУчреждение: -\nАдрес: -')
 
     def add_video(self):
-        video = Video(self.get_video_id(), self)
-        lyt = self.lstVideos.layout()  # type: QVBoxLayout
-        lyt.addWidget(video)
-        video.start()
+        for i, stream in enumerate(self.cameras[self.edtURL.text()]['streams'], 1):
+            video = Video(self.cameras[self.edtURL.text()], i, stream, self)
+            lyt = self.lstVideos.layout()  # type: QVBoxLayout
+            lyt.addWidget(video)
+            video.start()

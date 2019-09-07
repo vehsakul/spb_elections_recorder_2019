@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>401</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <item>
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>Stream URL</string>
+      <string>УИК №</string>
      </property>
     </widget>
    </item>
@@ -39,10 +39,10 @@
       <item>
        <widget class="QLineEdit" name="edtURL">
         <property name="text">
-         <string>https://www.youtube.com/watch?v=ueupsBPNkSc</string>
+         <string/>
         </property>
         <property name="placeholderText">
-         <string>https://youtube.com/watch?v=-VwZr-4k9yI</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -60,9 +60,16 @@
     </widget>
    </item>
    <item>
+    <widget class="QLabel" name="lblCameraInfo">
+     <property name="text">
+      <string>Район: -&lt;br&gt;Учреждение: -&lt;br&gt;Адрес: -</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QGroupBox" name="groupBox">
      <property name="title">
-      <string>Queue</string>
+      <string>Очередь</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="leftMargin">
@@ -114,8 +121,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>364</width>
-              <height>194</height>
+              <width>362</width>
+              <height>242</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_3">
