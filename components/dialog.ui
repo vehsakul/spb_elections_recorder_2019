@@ -169,13 +169,13 @@
    <item>
     <widget class="QLabel" name="label_2">
      <property name="enabled">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;https://t.me/bakatrouble&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#2eb8e6;&quot;&gt;bakatrouble&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>https://t.me/bakatrouble</string>
      </property>
      <property name="textFormat">
       <enum>Qt::RichText</enum>

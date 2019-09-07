@@ -9,15 +9,16 @@ import m3u8
 
 
 class DownloadFileWorker(QThread):
-    finished = Signal(float)
+    finished = Signal(float, int)
     errored = Signal(str)
 
-    def __init__(self, url, path, length):
+    def __init__(self, url, path, length, index):
         super(DownloadFileWorker, self).__init__()
 
         self.url = url
         self.path = path
         self.length = length
+        self.index = index
 
     def run(self):
         try:
@@ -31,7 +32,7 @@ class DownloadFileWorker(QThread):
         except IOError:
             self.errored.emit('Ошибка записи\n(проверьте свободное место на диске)')
             return
-        self.finished.emit(self.length)
+        self.finished.emit(self.length, self.index)
 
 
 class DownloadVideoWorker(QThread):
@@ -49,7 +50,7 @@ class DownloadVideoWorker(QThread):
         self.part_num = self.media_sequence = 0
         self.meta = self.hls = None
         self.stop = self.error = False
-        self.tasks = []
+        self.tasks = {}
 
     def _get_available_dir(self):
         for i in itertools.count():
@@ -57,11 +58,11 @@ class DownloadVideoWorker(QThread):
             if not os.path.exists(path):
                 return path
 
-    def _dl_chunk(self, url, path, length):
-        dl_worker = DownloadFileWorker(url, path, length)
-        dl_worker.finished.connect(self.downloaded_chunk)
+    def _dl_chunk(self, url, path, length, index):
+        dl_worker = DownloadFileWorker(url, path, length, index)
+        dl_worker.finished.connect(self.on_downloaded_chunk)
         dl_worker.errored.connect(self.on_error)
-        self.tasks.append(dl_worker)
+        self.tasks[index] = dl_worker
         dl_worker.start()
 
     def load_hls(self):
@@ -77,6 +78,10 @@ class DownloadVideoWorker(QThread):
     def on_error(self, msg):
         self.error = True
         self.errored.emit(msg)
+
+    def on_downloaded_chunk(self, length, index):
+        self.downloaded_chunk.emit(length)
+        del self.tasks[index]
 
     def run(self):
         self.directory = self._get_available_dir()
@@ -113,7 +118,7 @@ class DownloadVideoWorker(QThread):
             self.last_file = hls.files[-1]
             for i, file in enumerate(hls.files[idx:]):
                 file_name = os.path.join(self.directory, f'part.{self.part_num:06d}.ts')
-                self._dl_chunk(self.hls_url + file, file_name, hls.segments[idx+i].duration)
+                self._dl_chunk(self.hls_url + file, file_name, hls.segments[idx+i].duration, self.part_num)
                 self.part_num += 1
             time.sleep(hls.target_duration)
             while True:
