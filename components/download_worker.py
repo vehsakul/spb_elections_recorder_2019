@@ -28,7 +28,7 @@ class DownloadFileWorker(QThread):
                         f.write(requests.get(self.url, verify=False).content)
                         break
                     except requests.ConnectionError:
-                        pass
+                        time.sleep(1)
         except IOError:
             self.errored.emit('Ошибка записи\n(проверьте свободное место на диске)')
             return
@@ -126,4 +126,5 @@ class DownloadVideoWorker(QThread):
                 hls = self.load_hls()
                 if hls:
                     break
+                time.sleep(1)
         self.quit()
