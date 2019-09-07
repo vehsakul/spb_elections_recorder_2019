@@ -33,6 +33,7 @@ class DownloadFileWorker(QThread):
             self.errored.emit('Ошибка записи\n(проверьте свободное место на диске)')
             return
         self.finished.emit(self.length, self.index)
+        self.quit()
 
 
 class DownloadVideoWorker(QThread):
@@ -81,7 +82,7 @@ class DownloadVideoWorker(QThread):
 
     def on_downloaded_chunk(self, length, index):
         self.downloaded_chunk.emit(length)
-        del self.tasks[index]
+        # del self.tasks[index]
 
     def run(self):
         self.directory = self._get_available_dir()
@@ -125,3 +126,4 @@ class DownloadVideoWorker(QThread):
                 hls = self.load_hls()
                 if hls:
                     break
+        self.quit()

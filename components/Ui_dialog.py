@@ -86,7 +86,7 @@ class Ui_Dialog(object):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Stream Recorder"))
         self.label.setText(_translate("Dialog", "УИК №"))
-        self.btnAdd.setText(_translate("Dialog", "Add"))
+        self.btnAdd.setText(_translate("Dialog", "Добавить"))
         self.lblCameraInfo.setText(_translate("Dialog", "Район: -<br>Учреждение: -<br>Адрес: -"))
         self.groupBox.setTitle(_translate("Dialog", "Очередь"))
         self.label_2.setText(_translate("Dialog", "https://t.me/bakatrouble"))

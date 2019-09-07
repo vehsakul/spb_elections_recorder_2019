@@ -52,7 +52,7 @@
          <bool>false</bool>
         </property>
         <property name="text">
-         <string>Add</string>
+         <string>Добавить</string>
         </property>
        </widget>
       </item>
