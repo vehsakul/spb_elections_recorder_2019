@@ -104,9 +104,9 @@ class DownloadVideoWorker(QThread):
         while True:
             if self.stop:
                 self.stopped.emit()
-                return
+                break
             if self.error:
-                return
+                break
             if not hls.files:
                 continue
             try:
