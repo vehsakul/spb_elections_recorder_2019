@@ -29,11 +29,11 @@ class DownloadFileWorker(QThread):
                         break
                     except requests.ConnectionError:
                         time.sleep(1)
+            self.finished.emit(self.length, self.index)
         except IOError:
             self.errored.emit('Ошибка записи\n(проверьте свободное место на диске)')
-            return
-        self.finished.emit(self.length, self.index)
         self.quit()
+        self.deleteLater()
 
 
 class DownloadVideoWorker(QThread):
@@ -82,7 +82,7 @@ class DownloadVideoWorker(QThread):
 
     def on_downloaded_chunk(self, length, index):
         self.downloaded_chunk.emit(length)
-        # del self.tasks[index]
+        del self.tasks[index]
 
     def run(self):
         self.directory = self._get_available_dir()
@@ -128,3 +128,4 @@ class DownloadVideoWorker(QThread):
                     break
                 time.sleep(1)
         self.quit()
+        self.deleteLater()
