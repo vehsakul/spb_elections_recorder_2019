@@ -10,4 +10,4 @@ PySide2==5.13.1
 requests==2.18.4
 shiboken2==5.13.1
 sip==4.19.8
-urllib3==1.22
+urllib3==1.24.2
