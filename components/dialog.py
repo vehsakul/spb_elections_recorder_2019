@@ -2,10 +2,11 @@ import json
 import re
 
 from PySide2.QtWidgets import QDialog, QVBoxLayout
+# from PyQt5.QtWidgets import QDialog, QVBoxLayout
 
 from .Ui_dialog import Ui_Dialog
 from .video import Video
-from cameras import cameras
+from test_cameras import cameras
 
 
 class Dialog(Ui_Dialog, QDialog):
@@ -23,15 +24,19 @@ class Dialog(Ui_Dialog, QDialog):
         try:
             uik = cameras[self.edtURL.text()]
             self.btnAdd.setEnabled(True)
-            self.lblCameraInfo.setText('Район: {}\nУчреждение: {}\nАдрес: {}'.format(
-                uik['city_area_name'], uik['address_title'], uik['address']))
+            # self.lblCameraInfo.setText('Район: {}\nУчреждение: {}\nАдрес: {}'.format(
+            #     uik['city_area_name'], uik['address_title'], uik['address']))
         except KeyError:
             self.btnAdd.setEnabled(False)
-            self.lblCameraInfo.setText('Район: -\nУчреждение: -\nАдрес: -')
+            self.lblCameraInfo.setText('_____')
 
     def add_video(self):
-        for i, stream in enumerate(cameras[self.edtURL.text()]['streams'], 1):
-            video = Video(cameras[self.edtURL.text()], i, stream, self)
+            video = Video(cameras[self.edtURL.text()], 1, cameras[self.edtURL.text()]['potok'], self)
             lyt = self.lstVideos.layout()  # type: QVBoxLayout
             lyt.addWidget(video)
             video.start()
+        # for i, stream in enumerate(cameras[self.edtURL.text()]['streams'], 1):
+        #     video = Video(cameras[self.edtURL.text()], i, stream, self)
+        #     lyt = self.lstVideos.layout()  # type: QVBoxLayout
+        #     lyt.addWidget(video)
+        #     video.start()

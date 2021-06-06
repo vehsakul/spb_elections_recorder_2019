@@ -1,8 +1,11 @@
 import sys
 import traceback
-
+# import PySide2
 import urllib3
+
 from PySide2.QtWidgets import QApplication
+# from PyQt5.QtWidgets import QApplication
+# hiddenimports = collect_submodules('scipy')
 
 from components.dialog import Dialog
 

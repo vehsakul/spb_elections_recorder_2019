@@ -4,8 +4,12 @@ import tempfile
 import time
 
 from PySide2.QtCore import QThread, Signal
+# from PyQt5.QtCore import QThread
 import requests
 import m3u8
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 class DownloadFileWorker(QThread):
@@ -55,11 +59,16 @@ class DownloadVideoWorker(QThread):
 
     def _get_available_dir(self):
         for i in itertools.count():
-            path = os.path.join('output', f'УИК #{self.uik_obj["uik"]} ({i})', f'Камера {self.index}')
+            path = os.path.join('output', f'{self.uik_obj["uik"]} ({i})')
             if not os.path.exists(path):
                 return path
 
     def _dl_chunk(self, url, path, length, index):
+        # print(url)
+        url = url.replace('mono.m3u8', '')
+        print (url)
+        # print (url)
+
         dl_worker = DownloadFileWorker(url, path, length, index)
         dl_worker.finished.connect(self.on_downloaded_chunk)
         dl_worker.errored.connect(self.on_error)
@@ -67,12 +76,32 @@ class DownloadVideoWorker(QThread):
         dl_worker.start()
 
     def load_hls(self):
+        # print (self.hls_url)
+        # ff = open('d:\\tmp\\#cam\\test.txt', 'wb')
         try:
-            with tempfile.TemporaryDirectory() as dir:
-                file_path = os.path.join(dir, 'playlist.m3u8')
-                with open(file_path, 'wb') as f:
-                    f.write(requests.get(self.hls_url, verify=False).content)
-                return m3u8.load(file_path)
+        #     with tempfile.TemporaryDirectory() as dir:
+        #         file_path = os.path.join(dir, 'playlist.m3u8')
+        #         with open(file_path, 'wb') as f:
+        #             # f.write(requests.get(self.hls_url, verify=False).content)
+        #             a = requests.get(self.hls_url, verify=False).content
+        #             # f.write(a.replace('2020','https://flu01.pride-net.ru/cam_60let59/tracks-v1/2020'))
+        #             # print (a)
+        #             f.write(a)
+        #             # f.write(requests.get(self.hls_url, verify=False).content)
+        #             # ff.write(requests.get(self.hls_url, verify=False).content)
+        #             # ff.write(a)
+        #         # return m3u8.load(file_path)
+        #
+        #         m3u8_obj = m3u8.load('https://flu01.pride-net.ru/cam_60let59/tracks-v1/mono.m3u8')
+        #
+        #         print (m3u8_obj.segments)
+        #         print (m3u8_obj.target_duration)
+        #
+        #         # return m3u8.load('https://flu01.pride-net.ru/cam_60let59/tracks-v1/mono.m3u8')
+                print (requests.get(self.hls_url, verify=False).text)
+
+                return m3u8.load(self.hls_url)
+
         except:
             return None
 
@@ -97,9 +126,13 @@ class DownloadVideoWorker(QThread):
 
         hls = self.load_hls()
         if not hls:
-            self.error = True
-            self.errored.emit('Ошибка загрузки плейлиста')
-            return
+            try:
+                hls = self.load_hls()
+            except:
+                self.error = True
+                self.errored.emit('Ошибка загрузки плейлиста')
+                return
+
         self.media_sequence = hls.media_sequence
         while True:
             if self.stop:

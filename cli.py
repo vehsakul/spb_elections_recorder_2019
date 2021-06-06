@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import itertools
 import logging
 import os
@@ -6,32 +5,17 @@ import tempfile
 import time
 from threading import Thread
 
-from copy import copy
-import random
 import click
 import requests
 import m3u8
 import urllib3
 
-from urllib.request import urlopen, Request
-from urllib.parse import urljoin
 from cameras import cameras
 
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(name)s | %(message)s")
 
-user_agents = [
-    'Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.45 Safari/535.19',
-]
-
-default_headers = {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Encoding': 'gzip, deflate',
-    'Accept-Language': 'en-US,en;q=0.5',
-    'Connection': 'keep-alive',
-    'User-Agent': random.choice(user_agents)
-}
 
 class VideoStream:
     def __init__(self, uik_obj, index, stream_url, output):
@@ -45,14 +29,13 @@ class VideoStream:
         self.stop = self.stopped = False
         self.tasks = []
         self.logger = logging.getLogger(f'UIK #{uik_obj["uik"]} / cam {index}')
-        
-        self.headers = copy(default_headers)
-        #self.headers['Referer'] = referer()  # TODO
 
     def load_hls(self):
         try:
             with tempfile.TemporaryDirectory() as dir:
                 file_path = os.path.join(dir, 'playlist.m3u8')
+                # print (file_path)
+                # file_path = os.path.join(dir, 'mono.m3u8')
                 with open(file_path, 'wb') as f:
                     f.write(requests.get(self.hls_url, verify=False).content)
                 return m3u8.load(file_path)
@@ -62,6 +45,7 @@ class VideoStream:
     def _get_available_dir(self):
         for i in itertools.count():
             path = os.path.join(self.output, f'UIK #{self.uik_obj["uik"]} ({i})', f'cam {self.index}')
+            # print (path)
             if not os.path.exists(path):
                 return path
 
@@ -70,8 +54,8 @@ class VideoStream:
             with open(path, 'wb') as f:
                 for i in range(10):
                     try:
-                        request = urlopen(Request(url, headers=self.headers), timeout=60)
-                        f.write(request.read())
+                        f.write(requests.get(url, verify=False).content)
+                        print (url)
                         break
                     except requests.ConnectionError:
                         self.logger.warning('Cannot download chunk, retrying...')

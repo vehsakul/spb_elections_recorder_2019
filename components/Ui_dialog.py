@@ -8,6 +8,7 @@
 
 
 from PySide2 import QtCore, QtGui, QtWidgets
+# from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class Ui_Dialog(object):
@@ -78,7 +79,7 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Stream Recorder"))
-        self.label.setText(_translate("Dialog", "УИК №"))
-        self.btnAdd.setText(_translate("Dialog", "Добавить"))
+        self.label.setText(_translate("Dialog", "Polling station №"))
+        self.btnAdd.setText(_translate("Dialog", "Add"))
         self.lblCameraInfo.setText(_translate("Dialog", "Район: -<br>Учреждение: -<br>Адрес: -"))
-        self.groupBox.setTitle(_translate("Dialog", "Очередь"))
+        self.groupBox.setTitle(_translate("Dialog", "..."))

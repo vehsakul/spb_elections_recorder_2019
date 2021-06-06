@@ -1,6 +1,7 @@
 import uuid
 
 from PySide2.QtWidgets import QWidget
+# from PyQt5.QtWidgets import QWidget
 
 from components.download_worker import DownloadVideoWorker
 from .Ui_video import Ui_Video
@@ -21,7 +22,8 @@ class Video(Ui_Video, QWidget):
         self.part_num = 0
         self.task = None
 
-        self.lblTitle.setText('УИК №{} [камера {}]'.format(uik_obj['uik'], index))
+        # self.lblTitle.setText('УИК №{} [камера {}]'.format(uik_obj['uik'], index))
+        self.lblTitle.setText(uik_obj['uik'])
 
         self.btnStop.clicked.connect(self.stop)
         self.btnRemove.clicked.connect(self.remove)
@@ -43,17 +45,17 @@ class Video(Ui_Video, QWidget):
 
     def started(self):
         self.lblState.setStyleSheet('color: #090')
-        self.lblState.setText('Запись...')
+        self.lblState.setText('Recording in progress...')
         self.btnStop.setEnabled(True)
 
     def stop(self):
         self.lblState.setStyleSheet('')
-        self.lblState.setText('Остановка...')
+        self.lblState.setText('Recording stops...')
         self.btnStop.setEnabled(False)
         self.task.stop = True
 
     def stopped(self):
-        self.lblState.setText('Остановлен')
+        self.lblState.setText('Stopped')
         self.btnStop.setVisible(False)
         self.btnRemove.setVisible(True)
         self.btnRemove.setEnabled(True)

@@ -89,5 +89,5 @@ class Ui_Video(object):
         self.lblTitle.setText(_translate("Video", "Title"))
         self.lblState.setText(_translate("Video", "Loading metadata..."))
         self.lblLength.setText(_translate("Video", "00:00:00"))
-        self.btnStop.setText(_translate("Video", "Остановить"))
-        self.btnRemove.setText(_translate("Video", "Удалить"))
+        self.btnStop.setText(_translate("Video", "Stop"))
+        self.btnRemove.setText(_translate("Video", "Delete"))
