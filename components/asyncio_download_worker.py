@@ -2,6 +2,8 @@ import asyncio
 import itertools
 import logging
 import os
+import traceback
+from datetime import datetime
 from threading import Thread
 
 import aiofiles as aiofiles
@@ -21,16 +23,21 @@ class DownloadHandler:
     @classmethod
     async def async_get_text(cls, url, session=None):
         ses = session if session is not None else aiohttp.ClientSession()
+        max_retries = 5
         async with ses:
-            for i in range(5):
-                if i > 0:
-                    await asyncio.sleep(i * 2)
-                    cls.log.info(f'retrying GET {url} after {2 * i} seconds')
+            for i in range(max_retries):
                 try:
                     async with ses.get(url) as response:
+                        response.raise_for_status()
                         return await response.text()
                 except aiohttp.ClientConnectorError as e:
-                    cls.log.error(str(e))
+                    error_msg = f'GET {url} failed: {str(e)}'
+                    cls.log.error(error_msg)
+                    if i < max_retries:
+                        await asyncio.sleep(1 + i * 2)
+                        cls.log.info(f'retrying GET {url} after {1 + i * 2} seconds')
+                    else:
+                        raise
 
     @classmethod
     async def async_download(cls, url, filename, session=None):
@@ -78,7 +85,22 @@ class DownloadFileWorker(QObject, DownloadHandler):
         self.index = index
 
     async def run(self):
-        await self.async_download(self.url, self.path)
+        max_retries = 5
+        for i in range(max_retries):
+            try:
+                await self.async_download(self.url, self.path)
+            except aiohttp.ClientConnectorError as e:
+                error_msg = f'downloading of {self.url} to {self.path} failed: {str(e)}'
+                self.log.error(error_msg)
+                self.errored.emit(error_msg)
+                if i < max_retries:
+                    self.log.info(f'will retry {self.url}')
+                    await asyncio.sleep(2**i)
+                else:
+                    raise
+            else:
+                break
+
 
     def start(self):
         task = self.loop.create_task(self.run())
@@ -87,7 +109,8 @@ class DownloadFileWorker(QObject, DownloadHandler):
                 if not f.cancelled():
                     f.result()
             except Exception as e:
-                error_msg = f'downloading of {self.url} to {self.path} failed: {str(e)}'
+                error_msg = f'downloading of {self.url} to {self.path} failed: {str(e)}\n'
+                error_msg += traceback.format_exc()
                 self.log.error(error_msg)
                 self.errored.emit(error_msg)
             else:
@@ -108,12 +131,12 @@ class DownloadVideoWorker(QObject, DownloadHandler):
     def create_signals(self):
         pass
 
-    def __init__(self, uik_obj, index, stream_url):
+    def __init__(self, out_dir, index, stream_url):
         super(DownloadVideoWorker, self).__init__()
 
         self.create_signals()
 
-        self.uik_obj = uik_obj
+        self.out_dir = out_dir
         self.index = index
         self.directory = self.last_file = ''
         self.hls_url = stream_url
@@ -123,10 +146,7 @@ class DownloadVideoWorker(QObject, DownloadHandler):
         self.tasks = {}
 
     def _get_available_dir(self):
-        for i in itertools.count():
-            path = os.path.join('output', f'{self.uik_obj["uik"]} ({i})')
-            if not os.path.exists(path):
-                return path
+        return self.out_dir
 
     def _dl_chunk(self, url, path, length, index):
         url = url.replace('mono.m3u8', '')
@@ -161,16 +181,19 @@ class DownloadVideoWorker(QObject, DownloadHandler):
         #
         #         # return m3u8.load('https://flu01.pride-net.ru/cam_60let59/tracks-v1/mono.m3u8')
         #         print (requests.get(self.hls_url, verify=False).text)
+
+                self.last_hls_time = datetime.now()
                 hls_playlist = await self.async_get_text(self.hls_url)
+                # self.log.debug(hls_playlist)
 
                 return m3u8.loads(hls_playlist)
 
         except Exception as e:
-            self.log.error(str(e))
-            return None
+            # self.log.error(str(e))
+            raise
 
     def on_error(self, msg):
-        self.error = True
+        # self.error = True
         self.errored.emit(msg)
 
     def on_downloaded_chunk(self, length, index):
@@ -181,7 +204,7 @@ class DownloadVideoWorker(QObject, DownloadHandler):
         self.directory = self._get_available_dir()
 
         try:
-            os.makedirs(self.directory)
+            os.makedirs(self.directory, exist_ok=True)
         except OSError:
             self.errored.emit(f'failed to create directory {self.directory}')
             return
@@ -201,21 +224,26 @@ class DownloadVideoWorker(QObject, DownloadHandler):
                 idx = hls.files.index(self.last_file) + 1
             except ValueError:
                 if self.media_sequence != hls.media_sequence:
+                    self.log.error(f'{self.hls_url}: the last downloaded file is not present in the playlist, downloading the whole playlist')
                     idx = 0
                 else:
                     idx = -1
+
+            self.media_sequence = hls.media_sequence
             self.last_file = hls.files[-1]
             for i, file in enumerate(hls.files[idx:]):
                 file_name = os.path.join(self.directory, f'part.{hls.media_sequence:08d}.{self.part_num:06d}.ts')
                 self._dl_chunk(self.hls_url + file, file_name, hls.segments[idx+i].duration, self.part_num)
                 self.part_num += 1
-            await asyncio.sleep(hls.target_duration - 2)
+
+            await asyncio.sleep(max(0., hls.target_duration - (datetime.now() - self.last_hls_time).total_seconds()))
             prev_hls = hls
             while True:
                 hls = await self.load_hls()
                 if hls and hls.files[-1] != prev_hls.files[-1]:
                     break
-                await asyncio.sleep(0.2)
+                else:
+                    await asyncio.sleep(max(0., hls.target_duration / 2 - (datetime.now() - self.last_hls_time).total_seconds()))
 
     def start(self):
         def on_done(f: asyncio.Future):
@@ -223,7 +251,8 @@ class DownloadVideoWorker(QObject, DownloadHandler):
                 if not f.cancelled():
                     f.result()
             except Exception as e:
-                error_msg = f'processing of stream {self.hls_url} failed: {str(e)}'
+                error_msg = f'processing of stream {self.hls_url} failed: {str(e)}\n'
+                error_msg += traceback.format_exc()
                 self.log.error(error_msg)
                 self.on_error(error_msg)
             else:

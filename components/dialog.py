@@ -2,11 +2,9 @@ import json
 import re
 
 from PySide2.QtWidgets import QDialog, QVBoxLayout
-# from PyQt5.QtWidgets import QDialog, QVBoxLayout
 
 from .Ui_dialog import Ui_Dialog
 from .video import Video
-from test_cameras import cameras
 
 
 class Dialog(Ui_Dialog, QDialog):
@@ -18,20 +16,27 @@ class Dialog(Ui_Dialog, QDialog):
 
         self.edtURL.textChanged.connect(self.edt_changed)
         self.btnAdd.clicked.connect(self.add_video)
+        with open('cameras.csv') as f:
+            self.cameras = [line.rstrip() for line in f]
         self.edt_changed()
 
     def edt_changed(self):
         try:
-            uik = cameras[self.edtURL.text()]
-            self.btnAdd.setEnabled(True)
-            # self.lblCameraInfo.setText('Район: {}\nУчреждение: {}\nАдрес: {}'.format(
-            #     uik['city_area_name'], uik['address_title'], uik['address']))
-        except KeyError:
+            self.cameras[int(self.edtURL.text())]
+        except IndexError:
             self.btnAdd.setEnabled(False)
-            self.lblCameraInfo.setText('_____')
+            self.lblCameraInfo.setText('index out of range')
+        except ValueError as e:
+            self.btnAdd.setEnabled(False)
+            self.lblCameraInfo.setText('enter camera index')
+        else:
+            self.btnAdd.setEnabled(True)
+            self.lblCameraInfo.setText('')
+
 
     def add_video(self):
-            video = Video(cameras[self.edtURL.text()], 1, cameras[self.edtURL.text()]['potok'], self)
+            index = int(self.edtURL.text())
+            video = Video(self.cameras[index], index, self)
             lyt = self.lstVideos.layout()  # type: QVBoxLayout
             lyt.addWidget(video)
             video.start()

@@ -1,20 +1,23 @@
 import uuid
 
+import PySide2.QtCore
 from PySide2.QtWidgets import QWidget
 # from PyQt5.QtWidgets import QWidget
 
-from components.download_worker import DownloadVideoWorker
+from components.asyncio_download_worker import DownloadVideoWorker
 from .Ui_video import Ui_Video
+from .csv_reader import get_camera_stream, get_camera_full_name
 
 
 class Video(Ui_Video, QWidget):
-    def __init__(self, uik_obj, index, stream, dialog, parent=None):
+    def __init__(self, camera, index, dialog, parent=None):
         super(Video, self).__init__(parent)
         self.setupUi(self)
         self.setObjectName(str(uuid.uuid4()))
-        self.uik_obj = uik_obj
+        self.camera = camera
+        self.camera_name = get_camera_full_name(self.camera)
         self.index = index
-        self.stream = stream
+        self.stream = get_camera_stream(self.camera)
         self.dialog = dialog
         self.btnRemove.setVisible(False)
         self.length = 0.
@@ -22,8 +25,7 @@ class Video(Ui_Video, QWidget):
         self.part_num = 0
         self.task = None
 
-        # self.lblTitle.setText('УИК №{} [камера {}]'.format(uik_obj['uik'], index))
-        self.lblTitle.setText(uik_obj['uik'])
+        self.lblTitle.setText(self.camera_name)
 
         self.btnStop.clicked.connect(self.stop)
         self.btnRemove.clicked.connect(self.remove)
@@ -36,7 +38,7 @@ class Video(Ui_Video, QWidget):
         self.lblLength.setText(f'{hours:02d}:{minutes:02d}:{seconds:02d}')
 
     def start(self):
-        self.task = DownloadVideoWorker(self.uik_obj, self.index, self.stream)
+        self.task = DownloadVideoWorker(self.camera_name, self.index, self.stream)
         self.task.started.connect(self.started)
         self.task.downloaded_chunk.connect(self.update_length)
         self.task.stopped.connect(self.stopped)

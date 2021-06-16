@@ -1,10 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+
 block_cipher = None
 
 
 a = Analysis(['main.py'],
-             pathex=['D:\\python_progs\\spb_elections_recorder_2019'],
+             pathex=['E:\\repos\\elections_github'],
              binaries=[],
              datas=[],
              hiddenimports=[],
