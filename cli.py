@@ -3,6 +3,7 @@ import logging
 import sys
 import time
 import traceback
+import os
 from pathlib import Path
 
 import click
@@ -24,10 +25,14 @@ def excepthook(etype, value, tb):
 @click.option('--end', type=int, default=9999999)
 @click.option('--output', type=click.Path(file_okay=False, writable=True), default='output')
 @click.option('--dev/--prod', default=False)
-def record(start, end, output, dev):
+@click.option('--instance', default=0)
+@click.option('--num-instances', default=1)
+@click.option('--work-dir', required=True)
+def record(start, end, output, dev, instance, num_instances, work_dir):
     # setting exception hook for pycharm
     sys.excepthook = excepthook
 
+    os.chdir(work_dir)
     streams = []
     init_logging(dev)
     DownloadHandler.init()
@@ -38,8 +43,9 @@ def record(start, end, output, dev):
                 continue
             if i > end:
                 break
-            streams.append(DownloadVideoWorker(Path(output) / get_camera_full_name(c), i, get_camera_stream(c), get_camera_full_name(c)))
-            streams[-1].start()
+            if i % num_instances == instance:
+                streams.append(DownloadVideoWorker(Path(output) / get_camera_full_name(c), i, get_camera_stream(c), get_camera_full_name(c)))
+                streams[-1].start()
     try:
         while True:
             time.sleep(1)
