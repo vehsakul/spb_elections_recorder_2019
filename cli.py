@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import sys
 import time
@@ -42,10 +43,13 @@ def record(start, end, output, dev):
             time.sleep(1)
     except KeyboardInterrupt:
         logging.warning('Stopping...')
-        for stream in streams:
-            stream.stop = True
-        while not all(stream.stopped for stream in streams):
+        while True:
+            for task in asyncio.all_tasks(DownloadHandler.loop):
+                if not task.cancelled():
+                    task.cancel()
             time.sleep(1)
+            if len(asyncio.all_tasks(DownloadHandler.loop)) == 0:
+                break
     finally:
         DownloadHandler.deinit()
 

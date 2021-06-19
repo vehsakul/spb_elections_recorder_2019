@@ -7,7 +7,6 @@ from datetime import datetime
 from threading import Thread
 
 import aiofiles as aiofiles
-from PySide2.QtCore import QObject, Signal
 import aiohttp
 import m3u8
 import ssl
@@ -70,12 +69,10 @@ class DownloadHandler:
         cls.thread.join()
 
 
-class DownloadFileWorker(QObject, DownloadHandler):
-    finished = Signal(float, int)
-    errored = Signal(str)
-
+class DownloadFileWorker(DownloadHandler):
     def create_signals(self):
         pass
+
     def __init__(self, url, path, length, index):
         super(DownloadFileWorker, self).__init__()
 
@@ -94,7 +91,6 @@ class DownloadFileWorker(QObject, DownloadHandler):
             except aiohttp.ClientConnectorError as e:
                 error_msg = f'downloading of {self.url} to {self.path} failed: {str(e)}'
                 self.log.error(error_msg)
-                self.errored.emit(error_msg)
                 if i < max_retries:
                     self.log.info(f'will retry {self.url}')
                     await asyncio.sleep(2**i)
@@ -114,22 +110,14 @@ class DownloadFileWorker(QObject, DownloadHandler):
                 error_msg = f'downloading of {self.url} to {self.path} failed: {str(e)}\n'
                 error_msg += traceback.format_exc()
                 self.log.error(error_msg)
-                self.errored.emit(error_msg)
             else:
                 self.log.info('finished downloading %s to %s', self.url, self.path)
-                self.finished.emit(self.length, self.index)
-            finally:
-                self.deleteLater()
+
 
         task.add_done_callback(on_done)
 
 
-class DownloadVideoWorker(QObject, DownloadHandler):
-    started = Signal()
-    downloaded_chunk = Signal(float)
-    stopped = Signal()
-    errored = Signal(str)
-
+class DownloadVideoWorker(DownloadHandler):
     def create_signals(self):
         pass
 
@@ -144,8 +132,6 @@ class DownloadVideoWorker(QObject, DownloadHandler):
         self.hls_url = stream_url
         self.part_num = self.media_sequence = 0
         self.meta = self.hls = None
-        self.stop = self.error = False
-        self.tasks = {}
 
     def _get_available_dir(self):
         return self.out_dir
@@ -154,9 +140,6 @@ class DownloadVideoWorker(QObject, DownloadHandler):
         url = url.replace('mono.m3u8', '')
 
         dl_worker = DownloadFileWorker(url, path, length, index)
-        dl_worker.finished.connect(self.on_downloaded_chunk)
-        dl_worker.errored.connect(self.on_error)
-        self.tasks[index] = dl_worker
         dl_worker.start()
 
     async def load_hls(self):
@@ -194,34 +177,15 @@ class DownloadVideoWorker(QObject, DownloadHandler):
             # self.log.error(str(e))
             raise
 
-    def on_error(self, msg):
-        # self.error = True
-        self.errored.emit(msg)
-
-    def on_downloaded_chunk(self, length, index):
-        self.downloaded_chunk.emit(length)
-        del self.tasks[index]
-
     async def run(self):
         self.directory = self._get_available_dir()
 
-        try:
-            os.makedirs(self.directory, exist_ok=True)
-        except OSError:
-            self.errored.emit(f'failed to create directory {self.directory}')
-            return
-
-        self.started.emit()
+        os.makedirs(self.directory, exist_ok=True)
 
         hls = await self.load_hls()
         prev_hls = None
         self.media_sequence = hls.media_sequence
         while True:
-            if self.stop:
-                self.stopped.emit()
-                break
-            if self.error:
-                break
             try:
                 idx = hls.files.index(self.last_file) + 1
             except ValueError:
@@ -256,11 +220,8 @@ class DownloadVideoWorker(QObject, DownloadHandler):
                 error_msg = f'processing of stream {self.hls_url} failed: {str(e)}\n'
                 error_msg += traceback.format_exc()
                 self.log.error(error_msg)
-                self.on_error(error_msg)
             else:
                 self.log.info(f'finished processing of stream {self.hls_url}')
-            finally:
-                self.deleteLater()
 
         f = asyncio.run_coroutine_threadsafe(self.run(), self.loop)
         f.add_done_callback(on_done)
