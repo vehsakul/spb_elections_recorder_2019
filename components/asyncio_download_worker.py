@@ -60,10 +60,12 @@ class DownloadHandler:
     log = logging.getLogger('DownloadHandler')
     loop = asyncio.new_event_loop()
     requests_queue = asyncio.Queue()
+    connection_limit = 1000
 
     @classmethod
     async def async_get_text(cls, url, session=None):
-        ses = session if session is not None else aiohttp.ClientSession(trace_configs=[getTraceConfig()])
+        connector = aiohttp.TCPConnector(limit=cls.connection_limit)
+        ses = session if session is not None else aiohttp.ClientSession(connector=connector, trace_configs=[getTraceConfig()])
         max_retries = 5
         async with ses:
             for i in range(max_retries):
@@ -85,7 +87,8 @@ class DownloadHandler:
 
     @classmethod
     async def async_download(cls, url, filename, session=None):
-        ses = session if session is not None else aiohttp.ClientSession(trace_configs=[getTraceConfig()])
+        connector = aiohttp.TCPConnector(limit=cls.connection_limit)
+        ses = session if session is not None else aiohttp.ClientSession(connector=connector, trace_configs=[getTraceConfig()])
         async with ses:
             async with ses.request(method="GET", url=url) as response:
                 response.raise_for_status()
