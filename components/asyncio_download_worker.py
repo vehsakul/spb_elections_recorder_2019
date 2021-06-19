@@ -61,41 +61,44 @@ class DownloadHandler:
     loop = asyncio.new_event_loop()
     requests_queue = asyncio.Queue()
     connection_limit = 1000
+    session = None
 
     @classmethod
     async def async_get_text(cls, url, session=None):
         connector = aiohttp.TCPConnector(limit=cls.connection_limit)
-        ses = session if session is not None else aiohttp.ClientSession(connector=connector, trace_configs=[getTraceConfig()])
+        ses = cls.session if cls.session is not None else aiohttp.ClientSession(connector=connector, trace_configs=[getTraceConfig()])
+        cls.session = ses
         max_retries = 5
-        async with ses:
-            for i in range(max_retries):
-                try:
-                    async with ses.get(url) as response:
-                        response.raise_for_status()
-                        return await response.text()
-                except (aiohttp.ClientConnectorError, ClientResponseError) as e:
-                    if isinstance(e, ClientResponseError):
-                        if e.status != 504:
-                            raise
-                    error_msg = f'GET {url} failed: {str(e)}'
-                    cls.log.error(error_msg)
-                    if i < max_retries:
-                        await asyncio.sleep(1 + i * 2)
-                        cls.log.info(f'retrying GET {url} after {1 + i * 2} seconds')
-                    else:
+        # async with ses:
+        for i in range(max_retries):
+            try:
+                async with ses.get(url) as response:
+                    response.raise_for_status()
+                    return await response.text()
+            except (aiohttp.ClientConnectorError, ClientResponseError) as e:
+                if isinstance(e, ClientResponseError):
+                    if e.status != 504:
                         raise
+                error_msg = f'GET {url} failed: {str(e)}'
+                cls.log.error(error_msg)
+                if i < max_retries:
+                    await asyncio.sleep(1 + i * 2)
+                    cls.log.info(f'retrying GET {url} after {1 + i * 2} seconds')
+                else:
+                    raise
 
     @classmethod
     async def async_download(cls, url, filename, session=None):
         connector = aiohttp.TCPConnector(limit=cls.connection_limit)
-        ses = session if session is not None else aiohttp.ClientSession(connector=connector, trace_configs=[getTraceConfig()])
-        async with ses:
-            async with ses.request(method="GET", url=url) as response:
-                response.raise_for_status()
-                async with aiofiles.open(filename, "ba") as f:
-                    async for data in response.content.iter_chunked(256 * 1024):
-                        # cls.log.debug("writing data to %s", filename)
-                        await f.write(data)
+        ses = cls.session if cls.session is not None else aiohttp.ClientSession(connector=connector, trace_configs=[getTraceConfig()])
+        cls.session = ses
+        # async with ses:
+        async with ses.request(method="GET", url=url) as response:
+            response.raise_for_status()
+            async with aiofiles.open(filename, "ba") as f:
+                async for data in response.content.iter_chunked(256 * 1024):
+                    # cls.log.debug("writing data to %s", filename)
+                    await f.write(data)
 
     @classmethod
     def side_thread(cls, loop):
