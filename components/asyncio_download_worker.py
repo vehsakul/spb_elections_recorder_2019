@@ -13,8 +13,7 @@ import m3u8
 import ssl
 import urllib.parse
 
-ssl._create_default_https_context = ssl._create_unverified_context
-
+# ssl._create_default_https_context = ssl._create_unverified_context
 
 class DownloadHandler:
     log = logging.getLogger('DownloadHandler')
@@ -102,6 +101,9 @@ class DownloadFileWorker(DownloadHandler):
 
 
     def start(self):
+        with open(Path(self.path).with_suffix('.lock'), 'wb'):
+            pass
+
         task = self.loop.create_task(self.run())
         def on_done(f: asyncio.Future):
             try:
@@ -113,6 +115,8 @@ class DownloadFileWorker(DownloadHandler):
                 self.log.error(error_msg)
             else:
                 self.log.info('finished downloading %s to %s', self.url, self.path)
+            finally:
+                os.unlink(Path(self.path).with_suffix('.lock'))
 
 
         task.add_done_callback(on_done)

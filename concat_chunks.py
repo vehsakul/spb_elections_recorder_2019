@@ -9,6 +9,12 @@ import click
 
 suffix = '-concat'
 
+def check_locked(file):
+    result = Path(file).with_suffix('.lock').exists()
+    # if result:
+    #     logging.debug('file is locked')
+    return result
+
 @click.command()
 @click.option('--root', required=True)
 @click.option('--period', type=int, required=True)
@@ -20,7 +26,8 @@ def run(root, period):
 
     for subdir in subdirs:
         logging.info(f'processing {subdir}')
-        files = [f for f in os.scandir(Path(root) / subdir) if f.is_file() and (current_time > f.stat().st_ctime > (current_time - (period * 1.02) * 60))]
+        files = [f for f in os.scandir(Path(root) / subdir) if f.is_file() and not check_locked(f.path)
+                 and (current_time > f.stat().st_ctime > (current_time - (period * 1.05) * 60))]
         files.sort(key=lambda f: int(f.name.split('.')[-2]))
 
         # logging.debug(str(files))
