@@ -9,6 +9,7 @@ from threading import Thread
 
 import aiofiles as aiofiles
 import aiohttp
+from aiohttp.client_exceptions import ClientResponseError
 import m3u8
 import ssl
 import urllib.parse
@@ -30,7 +31,10 @@ class DownloadHandler:
                     async with ses.get(url) as response:
                         response.raise_for_status()
                         return await response.text()
-                except aiohttp.ClientConnectorError as e:
+                except (aiohttp.ClientConnectorError, ClientResponseError) as e:
+                    if isinstance(e, ClientResponseError):
+                        if e.status != 504:
+                            raise
                     error_msg = f'GET {url} failed: {str(e)}'
                     cls.log.error(error_msg)
                     if i < max_retries:
