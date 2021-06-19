@@ -11,6 +11,8 @@ from components.asyncio_download_worker import DownloadVideoWorker, DownloadHand
 from components.config import init_logging
 from components.csv_reader import get_camera_stream, get_camera_full_name
 
+# See: https://bugs.python.org/issue29288
+u''.encode('idna')
 
 # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
