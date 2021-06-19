@@ -4,6 +4,7 @@ import logging
 import os
 import traceback
 from datetime import datetime
+from pathlib import Path
 from threading import Thread
 
 import aiofiles as aiofiles
@@ -121,11 +122,12 @@ class DownloadVideoWorker(DownloadHandler):
     def create_signals(self):
         pass
 
-    def __init__(self, out_dir, index, stream_url):
+    def __init__(self, out_dir, index, stream_url, stream_name):
         super(DownloadVideoWorker, self).__init__()
 
         self.create_signals()
 
+        self.stream_name = stream_name
         self.out_dir = out_dir
         self.index = index
         self.directory = self.last_file = ''
@@ -198,7 +200,7 @@ class DownloadVideoWorker(DownloadHandler):
             self.media_sequence = hls.media_sequence
             self.last_file = hls.files[-1]
             for i, file in enumerate(hls.files[idx:]):
-                file_name = os.path.join(self.directory, f'part.{hls.media_sequence:08d}.{self.part_num:06d}.ts')
+                file_name = Path(os.path.join(self.directory)) / f'{self.stream_name}_{hls.media_sequence:08d}.{self.part_num:06d}.ts'
                 self._dl_chunk(urllib.parse.urljoin(self.hls_url, file), file_name, hls.segments[idx+i].duration, self.part_num)
                 self.part_num += 1
 

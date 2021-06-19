@@ -36,7 +36,7 @@ def record(start, end, output, dev):
                 continue
             if i > end:
                 break
-            streams.append(DownloadVideoWorker(Path(output) / get_camera_full_name(c), i, get_camera_stream(c)))
+            streams.append(DownloadVideoWorker(Path(output) / get_camera_full_name(c), i, get_camera_stream(c), get_camera_full_name(c)))
             streams[-1].start()
     try:
         while True:
