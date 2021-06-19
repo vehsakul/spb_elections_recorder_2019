@@ -11,6 +11,7 @@ from PySide2.QtCore import QObject, Signal
 import aiohttp
 import m3u8
 import ssl
+import urllib.parse
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -44,6 +45,7 @@ class DownloadHandler:
         ses = session if session is not None else aiohttp.ClientSession()
         async with ses:
             async with ses.request(method="GET", url=url) as response:
+                response.raise_for_status()
                 async with aiofiles.open(filename, "ba") as f:
                     async for data in response.content.iter_chunked(256 * 1024):
                         # cls.log.debug("writing data to %s", filename)
@@ -233,7 +235,7 @@ class DownloadVideoWorker(QObject, DownloadHandler):
             self.last_file = hls.files[-1]
             for i, file in enumerate(hls.files[idx:]):
                 file_name = os.path.join(self.directory, f'part.{hls.media_sequence:08d}.{self.part_num:06d}.ts')
-                self._dl_chunk(self.hls_url + file, file_name, hls.segments[idx+i].duration, self.part_num)
+                self._dl_chunk(urllib.parse.urljoin(self.hls_url, file), file_name, hls.segments[idx+i].duration, self.part_num)
                 self.part_num += 1
 
             await asyncio.sleep(max(0., hls.target_duration - (datetime.now() - self.last_hls_time).total_seconds()))
