@@ -39,7 +39,7 @@ class DownloadHandler:
                 cls.log.error(error_msg)
                 if i < max_retries:
                     await asyncio.sleep(1 + i * 2)
-                    cls.log.info(f'retrying GET {url} after {1 + i * 2} seconds')
+                    cls.log.warning(f'retrying GET {url} after {1 + i * 2} seconds')
                 else:
                     raise
 
@@ -48,13 +48,29 @@ class DownloadHandler:
         connector = aiohttp.TCPConnector(limit=cls.connection_limit)
         ses = cls.session if cls.session is not None else aiohttp.ClientSession(connector=connector)
         cls.session = ses
-        # async with ses:
-        async with ses.request(method="GET", url=url) as response:
-            response.raise_for_status()
-            async with aiofiles.open(filename, "ba") as f:
-                async for data in response.content.iter_chunked(256 * 1024):
-                    # cls.log.debug("writing data to %s", filename)
-                    await f.write(data)
+        max_retries = 5
+        for i in range(max_retries):
+            try:
+                async with ses.request(method="GET", url=url) as response:
+                    response.raise_for_status()
+                    async with aiofiles.open(filename, "ba") as f:
+                        async for data in response.content.iter_chunked(256 * 1024):
+                            # cls.log.debug("writing data to %s", filename)
+                            await f.write(data)
+            except (aiohttp.ClientConnectorError, ClientResponseError) as e:
+                if isinstance(e, ClientResponseError):
+                    if e.status != 504:
+                        raise
+                error_msg = f'downloading of {url} to {filename} failed: {str(e)}'
+                cls.log.error(error_msg)
+                if i < max_retries:
+                    await asyncio.sleep(1)
+                    os.unlink(filename)
+                    cls.log.warning(f'retrying to download {url} after {1} seconds')
+                else:
+                    raise
+            else:
+                break
 
     @classmethod
     def side_thread(cls, loop):
@@ -90,21 +106,7 @@ class DownloadFileWorker(DownloadHandler):
         self.index = index
 
     async def run(self):
-        max_retries = 5
-        for i in range(max_retries):
-            try:
-                await self.async_download(self.url, self.path)
-            except aiohttp.ClientConnectorError as e:
-                error_msg = f'downloading of {self.url} to {self.path} failed: {str(e)}'
-                self.log.error(error_msg)
-                if i < max_retries:
-                    self.log.info(f'will retry {self.url}')
-                    await asyncio.sleep(2**i)
-                else:
-                    raise
-            else:
-                break
-
+        await self.async_download(self.url, self.path)
 
     def start(self):
         with open(Path(self.path).with_suffix('.lock'), 'wb'):
