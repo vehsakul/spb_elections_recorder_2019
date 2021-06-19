@@ -14,7 +14,7 @@ handlers:
     formatter: simple
     filename: 'log.txt'
     maxBytes: 1000000
-    backupCount: 10
+    backupCount: 100
 loggers:
   aiohttp.client:
     handlers: [console, file]
