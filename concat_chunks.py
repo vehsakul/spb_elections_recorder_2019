@@ -7,7 +7,7 @@ from pathlib import Path
 
 import click
 
-suffix = '-concat'
+suffix = '_concat'
 
 def check_locked(file):
     result = Path(file).with_suffix('.lock').exists()
