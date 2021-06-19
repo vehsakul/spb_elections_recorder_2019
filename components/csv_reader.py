@@ -6,7 +6,7 @@ def get_camera_name_major(c):
 
 
 def get_camera_name_minor(c):
-    return c.split(SEPARATOR)[1]
+    return ''
 
 
 def get_camera_full_name(c):
@@ -15,5 +15,5 @@ def get_camera_full_name(c):
     return name
 
 def get_camera_stream(c):
-    return c.split(SEPARATOR)[2]
+    return c.split(SEPARATOR)[1]
 
