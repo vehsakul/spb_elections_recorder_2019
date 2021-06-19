@@ -20,12 +20,13 @@ def excepthook(etype, value, tb):
 @click.option('--start', type=int, default=0)
 @click.option('--end', type=int, default=9999999)
 @click.option('--output', type=click.Path(file_okay=False, writable=True), default='output')
-def record(start, end, output):
+@click.option('--dev/--prod', default=False)
+def record(start, end, output, dev):
     # setting exception hook for pycharm
     sys.excepthook = excepthook
 
     streams = []
-    init_logging()
+    init_logging(dev)
     DownloadHandler.init()
     with open('cameras.csv') as f:
         for i, c in enumerate(f):
