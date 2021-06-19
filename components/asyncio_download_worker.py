@@ -1,5 +1,4 @@
 import asyncio
-import itertools
 import logging
 import os
 import traceback
@@ -11,50 +10,7 @@ import aiofiles as aiofiles
 import aiohttp
 from aiohttp.client_exceptions import ClientResponseError
 import m3u8
-import ssl
 import urllib.parse
-
-tracelog = logging.getLogger('AiohttpTracing')
-
-async def on_request_start(session, trace_config_ctx, params):
-    tracelog.debug(f"Starting request {params.url}")
-
-async def on_request_end(session, trace_config_ctx, params):
-    tracelog.debug(f"Ending request {params.url}")
-
-async def on_request_exception(session, trace_config_ctx, params):
-    # tracelog.debug(f'{params.exception.__class__}')
-    tracelog.debug(f'on_request_exception {params.url} {params.exception}')
-
-async def on_connection_queued_start(session, trace_config_ctx, params):
-    tracelog.debug('connection queued start')
-
-async def on_connection_queued_end(session, trace_config_ctx, params):
-    tracelog.debug('connection queued end')
-
-async def on_connection_create_start(session, trace_config_ctx, params):
-    tracelog.debug('connection create start')
-
-async def on_connection_create_end(session, trace_config_ctx, params):
-    tracelog.debug('connection create end')
-
-async def on_connection_reuseconn(session, trace_config_ctx, params):
-    tracelog.debug('on_connection_reuseconn')
-
-
-def getTraceConfig():
-    traceconfig = aiohttp.TraceConfig()
-    traceconfig.on_request_start.append(on_request_start)
-    traceconfig.on_request_end.append(on_request_end)
-    traceconfig.on_request_exception.append(on_request_exception)
-    traceconfig.on_connection_queued_start.append(on_connection_queued_start)
-    traceconfig.on_connection_queued_end.append(on_connection_queued_end)
-    traceconfig.on_connection_create_start.append(on_connection_create_start)
-    traceconfig.on_connection_create_end.append(on_connection_create_end)
-    traceconfig.on_connection_reuseconn.append(on_connection_reuseconn)
-    return traceconfig
-
-# ssl._create_default_https_context = ssl._create_unverified_context
 
 class DownloadHandler:
     log = logging.getLogger('DownloadHandler')
@@ -66,7 +22,7 @@ class DownloadHandler:
     @classmethod
     async def async_get_text(cls, url, session=None):
         connector = aiohttp.TCPConnector(limit=cls.connection_limit)
-        ses = cls.session if cls.session is not None else aiohttp.ClientSession(connector=connector, trace_configs=[getTraceConfig()])
+        ses = cls.session if cls.session is not None else aiohttp.ClientSession(connector=connector)
         cls.session = ses
         max_retries = 5
         # async with ses:
@@ -90,7 +46,7 @@ class DownloadHandler:
     @classmethod
     async def async_download(cls, url, filename, session=None):
         connector = aiohttp.TCPConnector(limit=cls.connection_limit)
-        ses = cls.session if cls.session is not None else aiohttp.ClientSession(connector=connector, trace_configs=[getTraceConfig()])
+        ses = cls.session if cls.session is not None else aiohttp.ClientSession(connector=connector)
         cls.session = ses
         # async with ses:
         async with ses.request(method="GET", url=url) as response:
