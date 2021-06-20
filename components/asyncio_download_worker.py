@@ -65,7 +65,7 @@ class DownloadHandler:
                 cls.log.error(error_msg)
                 if i < max_retries:
                     await asyncio.sleep(1)
-                    os.unlink(filename)
+                    Path(filename).unlink(missing_ok=True)
                     cls.log.warning(f'retrying to download {url} after {1} seconds')
                 else:
                     raise
