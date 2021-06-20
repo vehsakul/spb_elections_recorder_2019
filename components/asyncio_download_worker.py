@@ -8,7 +8,7 @@ from threading import Thread
 
 import aiofiles as aiofiles
 import aiohttp
-from aiohttp.client_exceptions import ClientResponseError
+from aiohttp.client_exceptions import ClientResponseError, ServerDisconnectedError
 import m3u8
 import urllib.parse
 
@@ -31,7 +31,7 @@ class DownloadHandler:
                 async with ses.get(url) as response:
                     response.raise_for_status()
                     return await response.text()
-            except (aiohttp.ClientConnectorError, ClientResponseError) as e:
+            except (aiohttp.ClientConnectorError, ClientResponseError, ServerDisconnectedError) as e:
                 if isinstance(e, ClientResponseError):
                     if e.status != 504:
                         raise
@@ -57,7 +57,7 @@ class DownloadHandler:
                         async for data in response.content.iter_chunked(256 * 1024):
                             # cls.log.debug("writing data to %s", filename)
                             await f.write(data)
-            except (aiohttp.ClientConnectorError, ClientResponseError) as e:
+            except (aiohttp.ClientConnectorError, ClientResponseError, ServerDisconnectedError) as e:
                 if isinstance(e, ClientResponseError):
                     if e.status != 504:
                         raise
