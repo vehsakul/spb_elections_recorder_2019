@@ -26,15 +26,19 @@ class DownloadHandler:
         cls.session = ses
         max_retries = 5
         # async with ses:
-        for i in range(max_retries):
+        i = 0
+        while i < max_retries:
             try:
                 async with ses.get(url) as response:
                     response.raise_for_status()
                     return await response.text()
             except (aiohttp.ClientConnectorError, ClientResponseError, ServerDisconnectedError) as e:
+                increment_i = 1
                 if isinstance(e, ClientResponseError):
                     if e.status != 504:
                         raise
+                    else:
+                        increment_i = 0
                 error_msg = f'GET {url} failed: {str(e)}'
                 cls.log.error(error_msg)
                 if i < max_retries:
@@ -42,6 +46,8 @@ class DownloadHandler:
                     cls.log.warning(f'retrying GET {url} after {1 + i * 2} seconds')
                 else:
                     raise
+                i += increment_i
+
 
     @classmethod
     async def async_download(cls, url, filename, session=None):
@@ -49,7 +55,8 @@ class DownloadHandler:
         ses = cls.session if cls.session is not None else aiohttp.ClientSession(connector=connector)
         cls.session = ses
         max_retries = 5
-        for i in range(max_retries):
+        i = 0
+        while i < max_retries:
             try:
                 async with ses.request(method="GET", url=url) as response:
                     response.raise_for_status()
@@ -58,9 +65,12 @@ class DownloadHandler:
                             # cls.log.debug("writing data to %s", filename)
                             await f.write(data)
             except (aiohttp.ClientConnectorError, ClientResponseError, ServerDisconnectedError) as e:
+                increment_i = 1
                 if isinstance(e, ClientResponseError):
                     if e.status != 504:
                         raise
+                    else:
+                        increment_i = 0
                 error_msg = f'downloading of {url} to {filename} failed: {str(e)}'
                 cls.log.error(error_msg)
                 if i < max_retries:
@@ -69,6 +79,7 @@ class DownloadHandler:
                     cls.log.warning(f'retrying to download {url} after {1} seconds')
                 else:
                     raise
+                i += increment_i
             else:
                 break
 
