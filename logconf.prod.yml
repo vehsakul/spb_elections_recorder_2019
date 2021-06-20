@@ -8,18 +8,20 @@ handlers:
     level: INFO
     formatter: simple
     stream: ext://sys.stdout
-  file:
-    class: logging.handlers.RotatingFileHandler
+  file-info:
+    class: logging.FileHandler
     level: INFO
     formatter: simple
     filename: 'log.txt'
-    maxBytes: 1000000
-    backupCount: 100
+  file-errors:
+    class: logging.FileHandler
+    level: WARNING
+    formatter: simple
+    filename: 'error-log.txt'
 loggers:
   aiohttp.client:
-    handlers: [console, file]
-    level: ERROR
+    handlers: [console, file-info]
 root:
   level: INFO
-  handlers: [console, file]
+  handlers: [console, file-info, file-errors]
 disable_existing_loggers: no
