@@ -27,27 +27,18 @@ class DownloadHandler:
         max_retries = 5
         # async with ses:
         i = 0
-        while i < max_retries:
+        while True:
             try:
                 async with ses.get(url) as response:
                     response.raise_for_status()
                     return await response.text()
             except (aiohttp.ClientConnectorError, ClientResponseError, ServerDisconnectedError) as e:
-                increment_i = 1
-                if isinstance(e, ClientResponseError):
-                    if e.status != 504:
-                        raise
-                    else:
-                        increment_i = 0
                 error_msg = f'GET {url} failed: {str(e)}'
                 cls.log.error(error_msg)
-                if i < max_retries:
-                    await asyncio.sleep(1 + i * 2)
-                    cls.log.warning(f'retrying GET {url} after {1 + i * 2} seconds')
-                else:
-                    raise
-                i += increment_i
-
+                sleep_amount = min(1 + i * 2, 10)
+                await asyncio.sleep(sleep_amount)
+                cls.log.warning(f'retrying GET {url} after {sleep_amount} seconds')
+                i += 1
 
     @classmethod
     async def async_download(cls, url, filename, session=None):
@@ -56,7 +47,7 @@ class DownloadHandler:
         cls.session = ses
         max_retries = 5
         i = 0
-        while i < max_retries:
+        while True:
             try:
                 async with ses.request(method="GET", url=url) as response:
                     response.raise_for_status()
